@@ -1,0 +1,91 @@
+schema_version: 1
+
+context:
+  version: "14.4.2"
+
+package:
+  name: sox
+  version: ${{ version }}
+
+source:
+  url: http://sourceforge.net/projects/sox/files/sox/${{ version }}/sox-${{ version }}.tar.gz
+  md5: d04fba2d9245e661f245de0577f48a33
+  patches:
+    # Incorporates changes from https://github.com/dmkrepo/libsox to fix building on VS2015+ on windows
+    - patches/0001-cmake-windows.patch
+    - if: win
+      then: patches/0002-MP3-support-on-windows.patch
+
+build:
+  number: 1021
+  prefix_detection:
+    ignore_binary_files: true
+
+requirements:
+  build:
+    - cmake
+    - ninja
+    - if: not win
+      then: make
+    - pkg-config
+    - ${{ compiler('c') }}
+    - ${{ stdlib('c') }}
+  host:
+    - libpng
+    - zlib
+    - liblzma-devel
+    - libsndfile
+    - libvorbis
+    - libflac
+    - libopus
+    - if: linux
+      then: speex
+    - lame
+    - if: not win
+      then: mad
+    - if: win
+      then: libmad
+  run:
+    - libpng
+    - zlib
+    - liblzma-devel
+    - lame
+    - if: not win
+      then: mad
+    - if: win
+      then: libmad
+  run_exports:
+    - ${{ pin_subpackage('sox', upper_bound='x.x.x') }}
+
+tests:
+  - script:
+      - if: unix
+        then: test -e $PREFIX/include/sox.h
+      - if: unix
+        then: test -e $PREFIX/lib/libsox_static.a
+      - if: linux
+        then: test -e $PREFIX/lib/libsox.so
+      - if: osx
+        then: test -e $PREFIX/lib/libsox.dylib
+      - if: osx
+        then: otool -L $PREFIX/lib/libsox.dylib
+      - if: win
+        then: sox --help
+      - if: not win
+        then: sox --help |grep "FILE FORMATS" | grep mp3
+      - if: not win
+        then: soxi --help |grep "Usage[:] soxi"
+
+about:
+  license: GPL-2.0-only
+  summary: A cross-platform command line utility that can convert various formats of computer audio files in to other formats.
+  license_file: COPYING
+  homepage: http://sox.sourceforge.net/
+
+extra:
+  recipe-maintainers:
+    - 183amir
+    - alexbw
+    - sdvillal
+    - alexchen@gmail.com
+
