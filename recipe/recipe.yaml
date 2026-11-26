@@ -17,7 +17,7 @@ source:
       then: patches/0002-MP3-support-on-windows.patch
 
 build:
-  number: 1021
+  number: 1022
   prefix_detection:
     ignore_binary_files: true
 
